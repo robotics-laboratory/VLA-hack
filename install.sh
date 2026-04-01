@@ -4,7 +4,7 @@ set -e
 echo "=== LeRobot Workshop Setup ==="
 
 ASSET_ARCHIVE="asset.zip"
-DEFAULT_ASSET_GDRIVE_URL="https://drive.google.com/file/d/1c7vDoQ5r4h7d8-nIb0XgQudi4Yp-wM0O/view?usp=sharing"
+DEFAULT_ASSET_GDRIVE_URL="https://drive.google.com/file/d/1YuvTRgxeehHA2cwGlMWSYxq2bzLMqNvL/view?usp=share_link"
 
 # Install Python 3.12 and tkinter if needed
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
