@@ -156,3 +156,68 @@ lerobot-record \
 
 На Linux, если во время записи датасета не работают клавиши `Left`, `Right` и `Escape`, проверьте, что установлена переменная окружения `$DISPLAY`. Подробнее: [pynput limitations for Linux](https://pynput.readthedocs.io/en/latest/limitations.html#linux).
 
+## Обучение моделей
+
+Для первого эксперимента мы предлагаем начинать со **SmolVLA**: это хороший базовый VLA-пайплайн, на котором удобно быстро проверить весь цикл целиком, от датасета до инференса в симуляции.
+
+Для обучения и инференса мы используем готовый образ на Docker Hub: [dpaleyev/lerobot-workshop](https://hub.docker.com/r/dpaleyev/lerobot-workshop).
+
+Перед началом работы скачайте образ:
+
+```bash
+docker pull dpaleyev/lerobot-workshop:latest
+```
+
+### Обучение SmolVLA
+
+Скрипт `run_official_smolvla_train_cached.sh` оборачивает `lerobot-train` в `docker run`, автоматически:
+
+- монтирует репозиторий в `/app`;
+- пробрасывает GPU;
+- сохраняет Hugging Face cache в `outputs/hf_cache`;
+- добавляет несколько дефолтных флагов для обучения.
+
+Базовый запуск:
+
+```bash
+./run_official_smolvla_train_cached.sh \
+    --policy.type=smolvla \
+    --policy.device=cuda \
+    --dataset.repo_id=local/record-test \
+    --dataset.root=/app/record-test \
+    --output_dir=/app/outputs/train/smolvla_so101 \
+    --job_name=smolvla_so101
+```
+
+Все дополнительные аргументы после имени скрипта пробрасываются напрямую в `lerobot-train`, поэтому сюда можно добавлять свои параметры `dataset`, `policy`, `training` и `eval`.
+
+### Оценка модели в симуляторе
+
+Для оценки чекпоинта в MuJoCo используйте `run_smolvla_inference.py`. Проще всего запускать его в том же контейнере в headless-режиме:
+
+```bash
+docker run --rm --gpus all \
+    -v "$PWD:/app" \
+    -w /app \
+    dpaleyev/lerobot-workshop:latest \
+    python run_smolvla_inference.py \
+        --policy-path /app/outputs/train/smolvla_so101/checkpoints/last/pretrained_model \
+        --dataset-root /app/record-test \
+        --dataset-repo-id local/record-test \
+        --episodes 10 \
+        --max-steps 250 \
+        --fps 10 \
+        --headless \
+        --summary-path /app/outputs/eval/smolvla_so101_summary.json
+```
+
+Этот скрипт:
+
+- загружает обученный SmolVLA checkpoint;
+- подтягивает статистики датасета для нормализации;
+- прогоняет несколько эпизодов в MuJoCo;
+- считает число успешных эпизодов и success rate;
+- сохраняет итоговый JSON-отчёт, если передан `--summary-path`.
+
+
+
