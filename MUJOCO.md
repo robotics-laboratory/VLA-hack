@@ -420,3 +420,4 @@ success = env.check_success()  # True если кружка на тарелке
 - [XML Reference](https://mujoco.readthedocs.io/en/stable/XMLreference.html) — справочник по всем тегам
 - [Python Bindings](https://mujoco.readthedocs.io/en/stable/python.html) — все функции Python API
 - [Туториал по моделированию](https://mujoco.readthedocs.io/en/stable/modeling.html)
+- [Репозиторий со ссылами на разные ресурсы MuJoCo на все случаи жизни](https://github.com/Tadinu/awesome_mujoco)
