@@ -193,7 +193,7 @@ docker pull dpaleyev/lerobot-workshop:latest
 
 ### Оценка модели в симуляторе
 
-Для оценки чекпоинта в MuJoCo используйте `run_smolvla_inference.py`. Проще всего запускать его в том же контейнере в headless-режиме:
+Для оценки чекпоинта в MuJoCo используйте `run_smolvla_inference.py`. На удалённой машине мы рекомендуем запускать его в контейнере через VNC, чтобы видеть окно симуляции:
 
 ```bash
 docker run --rm --gpus all \
@@ -207,7 +207,6 @@ docker run --rm --gpus all \
         --episodes 10 \
         --max-steps 250 \
         --fps 10 \
-        --headless \
         --summary-path /app/outputs/eval/smolvla_so101_summary.json
 ```
 
