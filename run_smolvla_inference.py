@@ -20,12 +20,6 @@ from lerobot.policies.smolvla.configuration_smolvla import SmolVLAConfig
 from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 from lerobot.policies.factory import make_pre_post_processors
 from lerobot.configs.types import FeatureType
-from smolvla_defaults import (
-    DEFAULT_DATASET_REPO_ID,
-    default_dataset_root,
-    default_train_config_path,
-    default_train_run_dir,
-)
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent
 FRONT_CAMERA_KEYS = {"observation.image", "observation.images.front", "observation.images.camera1"}
@@ -77,12 +71,13 @@ GRIPPER_MAX_REAL = 100.0
 def parse_args():
     cfg = default_config()
     parser = argparse.ArgumentParser(description="SmolVLA inference in MuJoCo.")
-    parser.add_argument("--policy-path", "--model", dest="policy_path", type=Path, default=None)
-    parser.add_argument("--train-config", type=Path, default=None)
-    parser.add_argument("--train-run-dir", type=Path, default=default_train_run_dir())
-    parser.add_argument("--checkpoint-step", type=int, default=None)
-    parser.add_argument("--dataset-root", type=Path, default=None)
-    parser.add_argument("--dataset-repo-id", default=None)
+    source_group = parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument("--policy-path", "--model", dest="policy_path", type=Path, default=None)
+    source_group.add_argument("--train-config", type=Path, default=None)
+    source_group.add_argument("--checkpoint-step", type=int, default=None)
+    parser.add_argument("--train-run-dir", type=Path, default=None)
+    parser.add_argument("--dataset-root", type=Path, required=True)
+    parser.add_argument("--dataset-repo-id", required=True)
     parser.add_argument("--task", default=cfg.task_name)
     parser.add_argument("--xml-path", default=cfg.xml_path)
     parser.add_argument("--fps", type=int, default=cfg.fps)
@@ -172,28 +167,16 @@ def resolve_artifacts(args) -> InferenceArtifacts:
             raise ValueError("Policy path is required.")
         candidate = policy_path / "train_config.json"
         train_config_path = candidate if candidate.exists() else None
-    else:
-        train_config_path = remap_path(default_train_config_path())
-        if train_config_path is None or not train_config_path.exists():
-            raise FileNotFoundError(
-                "Default official train_config.json not found. "
-                "Pass --train-config, --policy-path, or --checkpoint-step."
-            )
-        policy_path = train_config_path.parent
 
     if not policy_path.exists():
         raise FileNotFoundError(f"Policy checkpoint not found: {policy_path}")
 
     train_config = load_train_config(train_config_path)
-    dataset_cfg = (train_config or {}).get("dataset", {})
-    dataset_root = remap_path(args.dataset_root or dataset_cfg.get("root")) or default_dataset_root()
-    dataset_repo_id = args.dataset_repo_id or dataset_cfg.get("repo_id") or DEFAULT_DATASET_REPO_ID
+    dataset_root = remap_path(args.dataset_root)
+    dataset_repo_id = args.dataset_repo_id
 
     if not dataset_root.exists():
-        raise FileNotFoundError(
-            f"Dataset root not found: {dataset_root}. "
-            "Pass --dataset-root explicitly if the train config points to a container path."
-        )
+        raise FileNotFoundError(f"Dataset root not found: {dataset_root}")
 
     return InferenceArtifacts(
         policy_path=policy_path,

@@ -195,19 +195,29 @@ docker pull dpaleyev/lerobot-workshop:latest
 
 Для оценки чекпоинта в MuJoCo используйте `run_smolvla_inference.py`. На удалённой машине мы рекомендуем запускать его в контейнере через VNC, чтобы видеть окно симуляции:
 
+Параметры запуска:
+
+- нужно явно указать источник модели;
+- `--dataset-root` и `--dataset-repo-id` обязательны;
+- если используется `--checkpoint-step`, нужно дополнительно передать `--train-run-dir`;
+- `--summary-path` опционален, но удобен для сохранения итоговой статистики.
+
+Рекомендуемый запуск через `--train-run-dir`:
+
 ```bash
 docker run --rm --gpus all \
     -v "$PWD:/app" \
     -w /app \
     dpaleyev/lerobot-workshop:latest \
     python run_smolvla_inference.py \
-        --policy-path /app/outputs/train/smolvla_so101/checkpoints/last/pretrained_model \
+        --checkpoint-step 10000 \
+        --train-run-dir /app/outputs/train/smolvla_so101 \
         --dataset-root /app/record-test \
         --dataset-repo-id local/record-test \
         --episodes 10 \
         --max-steps 250 \
         --fps 10 \
-        --summary-path /app/outputs/eval/smolvla_so101_summary.json
+        --summary-path /app/outputs/eval/smolvla_so101_step10000.json
 ```
 
 Этот скрипт:
