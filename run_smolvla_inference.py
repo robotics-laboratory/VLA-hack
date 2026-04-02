@@ -16,10 +16,10 @@ from torchvision.transforms import ToTensor
 
 from collect_data.config import default_config
 from lerobot.datasets.lerobot_dataset import LeRobotDatasetMetadata
+from lerobot.policies.smolvla.configuration_smolvla import SmolVLAConfig
 from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 from lerobot.policies.factory import make_pre_post_processors
 from lerobot.configs.types import FeatureType
-from smolvla_compat import load_smolvla_config
 from smolvla_defaults import (
     DEFAULT_DATASET_REPO_ID,
     default_dataset_root,
@@ -206,7 +206,8 @@ def resolve_artifacts(args) -> InferenceArtifacts:
 
 def load_policy(model_path: Path, dataset_root: Path, dataset_repo_id: str, device: torch.device):
     ds_meta = LeRobotDatasetMetadata(dataset_repo_id, root=str(dataset_root))
-    cfg = load_smolvla_config(model_path, device=device)
+    cfg = SmolVLAConfig.from_pretrained(str(model_path))
+    cfg.device = device.type
     if model_path.is_dir() and cfg.load_vlm_weights:
         cfg.load_vlm_weights = False
     policy = SmolVLAPolicy.from_pretrained(
